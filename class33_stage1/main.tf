@@ -1,13 +1,13 @@
-#This Terraform Code Deploys Basic VPC Infra...
+#This Terraform Code Deploys Basic VPC Infra.
 provider "aws" {
   region = var.aws_region
 }
 
 terraform {
-  required_version = "<= 2.0.14" #Forcing which version of Terraform needs to be used
+  required_version = "<= 1.4.6" #Forcing which version of Terraform needs to be used
   required_providers {
     aws = {
-      version = "<= 5.0.0" #Forcing which version of plugin needs to be used.
+      version = "<= 4.65.0" #Forcing which version of plugin needs to be used.
       source  = "hashicorp/aws"
     }
   }
@@ -18,7 +18,7 @@ resource "aws_vpc" "default" {
   enable_dns_hostnames = true
   tags = {
     Name        = "${var.vpc_name}"
-    Owner       = "Ramesh raju"
+    Owner       = "ramesh raju"
     environment = "${var.environment}"
   }
 }
@@ -100,8 +100,17 @@ resource "aws_security_group" "allow_all" {
   }
 }
 
+data "aws_ami" "my_ami" {
+  most_recent = true
+  name_regex  = "^DevOpsClass-B27"
+  owners      = ["754594149475"]
+}
+
+
 resource "aws_instance" "web-1" {
-  ami                         = var.imagename
+  #ami = var.imagename
+  ami = "ami-07ee91af91f3eb968"
+  #ami                         = data.aws_ami.my_ami.id
   availability_zone           = "us-east-1a"
   instance_type               = "t2.micro"
   key_name                    = "devops"
@@ -109,7 +118,7 @@ resource "aws_instance" "web-1" {
   vpc_security_group_ids      = ["${aws_security_group.allow_all.id}"]
   associate_public_ip_address = true
   tags = {
-    Name       = "TestServer01"
+    Name       = "Server-1"
     Env        = "Prod"
     Owner      = "ramesh"
     CostCenter = "ABCD"
@@ -117,7 +126,10 @@ resource "aws_instance" "web-1" {
 }
 
 resource "aws_instance" "web-2" {
-  ami                         = var.imagename
+  count = 2
+  #ami = var.imagename
+  #ami = "ami-07ee91af91f3eb968"
+  ami                         = data.aws_ami.my_ami.id
   availability_zone           = "us-east-1a"
   instance_type               = "t2.micro"
   key_name                    = "devops"
@@ -125,28 +137,10 @@ resource "aws_instance" "web-2" {
   vpc_security_group_ids      = ["${aws_security_group.allow_all.id}"]
   associate_public_ip_address = true
   tags = {
-    Name       = "TestServer02"
+    Name       = "Server-0${count.index + 1}"
     Env        = "Prod"
     Owner      = "ramesh"
     CostCenter = "ABCD"
   }
 }
-
-resource "aws_instance" "web-3" {
-  ami                         = var.imagename
-  availability_zone           = "us-east-1a"
-  instance_type               = "t2.micro"
-  key_name                    = "devops"
-  subnet_id                   = aws_subnet.subnet1-public.id
-  vpc_security_group_ids      = ["${aws_security_group.allow_all.id}"]
-  associate_public_ip_address = true
-  tags = {
-    Name       = "TestServer03"
-    Env        = "Prod"
-    Owner      = "ramesh"
-    CostCenter = "ABCD"
-  }
-}
-
-
 
